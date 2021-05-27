@@ -11,17 +11,17 @@
 #include "key.h"
 
 //coefficient of PID Controler
-float kp =0.5;   
+float kp =0.5;
 float kd =0.01;
 float ki =0.02;
 
 float A=0.0,B=0.0,C=0.0;
 
 // error value
-int err=0,lerr=0; 
+int err=0,lerr=0;
 
 // controller output value
-long int ctrl;  
+long int ctrl;
 
 long int input=0;   //Input
 long int p=0;       //Pulse Counter
@@ -39,9 +39,9 @@ interrupt [EXT_INT0] void ext_int0_isr(void)
 interrupt [TIM0_OVF] void timer0_ovf_isr(void)
 {
     //Calculate Speed
-    //The coefficient depends on the encoder used 
+    //The coefficient depends on the encoder used
 	speed=p*45.776;
-    
+
     //Reset Pulse Counter for Nex Time
 	p=0;
 }
@@ -124,88 +124,88 @@ while (1)
       {
       //Get Speed from user
       lcd_clear();
-      lcd_puts("Enter RPM:"); 
-      sprintf(str,"%ld",input);           
+      lcd_puts("Enter RPM:");
+      sprintf(str,"%ld",input);
       lcd_gotoxy(0,1);
       lcd_puts(str);
       ch=getkey();
-       
+
       //Reset input and output
       if(ch=='#')
        {
-       input=0;  
+       input=0;
        OCR1A=0;
        }
-         
+
       //Calculate Entered Speed by user
       else if(ch!='A'&&ch!='B'&&ch!='C'&&ch!='D'&&ch!='*')
-       { 
+       {
        if(input<10000)
-       input=(input*10)+(ch-'0'); 
+       input=(input*10)+(ch-'0');
        }
-        
-      //Run PID Controler  
+
+      //Run PID Controler
       else if(ch=='*')
        {
-       //Range check           
+       //Range check
        if(input>100000)input=100000;
-       else if(input<0)input=0; 
-        
-       //Reset memory 
-       OCR1A=0; 
+       else if(input<0)input=0;
+
+       //Reset memory
+       OCR1A=0;
        lerr=0;
-       err=0;  
+       err=0;
        ctrl=0;
        A=0;
        B=0;
        C=0;
-        
-       //Clear LCD 
+
+       //Clear LCD
        lcd_clear();
-        
+
        //Loop - Break by holding # key
        while(1)
         {
         //Display Values on LCD
         lcd_gotoxy(0,0);
-        lcd_puts("Runing... "); 
-        sprintf(str,"%07ld->%07ld    ",speed,input);           
+        lcd_puts("Runing... ");
+        sprintf(str,"%07ld->%07ld    ",speed,input);
         lcd_gotoxy(0,1);
-        lcd_puts(str);  
-         
-        //Controller Process 
+        lcd_puts(str);
+
+        //Controller Process
         err = input - speed;
-        A=kp*err; 
+        A=kp*err;
         B=(ki*err)+B;
         C=(err-lerr)*kd;
-        lerr=err; 
-         
-        //Output Signal 
+        lerr=err;
+
+        //Output Signal
         ctrl=A+B+C;
-         
-        //Range check 
+
+        //Range check
         if(ctrl < 0) ctrl = 0;
         else if(ctrl > 1000) ctrl = 1000;
-         
+
         //Generate pwm
-        OCR1A= ctrl; 
-                       
+        OCR1A= ctrl;
+
         delay_ms(10);
-          
+
         if(chek_sharp()==1)
          {
          //Stop PWM
          OCR1A=0;
-                
+
          lcd_clear();
          lcd_puts("Stoping...");
          while(chek_sharp()==1);
          delay_ms(500);
-         break; 
+         break;
          }
         }
        }
-       
-      delay_ms(200);  
+
+      delay_ms(200);
       }
 }
